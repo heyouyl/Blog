@@ -1,0 +1,93 @@
+package springMVC.NLoveB.po;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToOne;
+import javax.persistence.PrimaryKeyJoinColumn;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+
+/**
+ * 
+ * @ClassName:  Terms   
+ * @Description:TODO(这里用一句话描述这个类的作用)   
+ * @author: likilone(何懮) 
+ * @date:   2018年3月29日 下午11:06:58   
+ *     
+ * @Copyright: 2018 www.028888.net Inc. All rights reserved.
+ */
+@Entity(name="terms")
+@Table(name="blog_terms")
+@DynamicInsert(value = true)
+@DynamicUpdate(value = true)
+public class Terms {
+	private int termid;	//分类id
+	private String name;//分类名称
+	private String slug;//缩略名 显示在网址栏的
+	private int term_group;//未知  默认0
+	
+	private Term_taxonomy term_taxonomy;	//分类id
+/*
+ * CREATE TABLE IF NOT EXISTS `my028888_terms` (
+  `term_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(200) NOT NULL DEFAULT '',
+  `slug` varchar(200) NOT NULL DEFAULT '',
+  `term_group` bigint(10) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`term_id`),
+  KEY `slug` (`slug`(191)),
+  KEY `name` (`name`(191))
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=747 ;
+ */
+	@Id
+	@Column(name = "term_id", unique = true, nullable = false,length=20)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	public int getTermid() {
+		return termid;
+	}
+	public void setTermid(int termid) {
+		this.termid = termid;
+	}
+	
+	@Column(name = "name", unique = false, nullable = true,columnDefinition="varchar(200) NOT NULL DEFAULT ''")
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	
+	@Column(name = "slug", unique = false, nullable = true,columnDefinition="varchar(200) NOT NULL DEFAULT ''")
+	public String getSlug() {
+		return slug;
+	}
+	public void setSlug(String slug) {
+		this.slug = slug;
+	}
+	
+	@Column(name = "term_group", unique = false, nullable = true,columnDefinition="bigint(10) NOT NULL DEFAULT '0'")
+	public int getTerm_group() {
+		return term_group;
+	}
+	public void setTerm_group(int term_group) {
+		this.term_group = term_group;
+	}
+	
+	@OneToOne(cascade = CascadeType.ALL,fetch = FetchType.EAGER,mappedBy="termid",optional = true)
+	@PrimaryKeyJoinColumn
+	public Term_taxonomy getTerm_taxonomy() {
+		return term_taxonomy;
+	}
+	public void setTerm_taxonomy(Term_taxonomy term_taxonomy) {
+		this.term_taxonomy = term_taxonomy;
+	}
+
+	
+	
+}

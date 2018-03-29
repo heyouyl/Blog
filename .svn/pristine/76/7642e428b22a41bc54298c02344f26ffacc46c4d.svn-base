@@ -1,0 +1,305 @@
+package springMVC.NLoveB.service.impl;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
+
+import springMVC.NLoveB.dao.iter.DaoUserPermissionsIter;
+import springMVC.NLoveB.po.UserMeta;
+import springMVC.NLoveB.po.Users;
+import springMVC.NLoveB.service.iter.PasswordIter;
+import springMVC.NLoveB.service.iter.SerUserInfoIter;
+import springMVC.NLoveB.test.wordpass;
+
+@Service("seruserinfo")
+public class SerUserInfoImpl implements SerUserInfoIter {
+	
+	@Resource(name="daouserper")
+	private DaoUserPermissionsIter daouserper;
+	@Resource(name="utilpassword")
+	private PasswordIter password;
+	@Override
+	public String opuserinfo(String userid, String displayname, String blogurl, String user_qq, String user_weixin,
+			String user_weibo) {
+		Users user = daouserper.useridinfo(Integer.parseInt(userid));
+		if(null==user){
+			return "updateerror";
+		}
+		user.setDisplayname(displayname);
+		user.setBlogurl(blogurl);
+		
+		//获得usermeta
+		Set<UserMeta> usermeta = user.getUsermeta();
+		//新的set集合
+		Set<UserMeta> newusermeta = new HashSet<UserMeta>();
+		
+		//初始数据
+		Map<String,String> map = new HashMap<String,String>();
+		map.put("my028888_user_qq", user_qq);
+		map.put("my028888_user_weixin", user_weixin);
+		map.put("my028888_user_weibo", user_weibo);
+
+		//需要更新的数据
+		for(Map.Entry<String, String> entry:map.entrySet()){
+			//得到需要更新的key
+			String key = "my028888_"+entry.getKey();
+			for(UserMeta set:usermeta){
+				String umetakey = set.getUmetakey();
+				if(umetakey.equals(key)){
+					set.setUmetavalue(entry.getValue());
+					newusermeta.add(set);
+					map.remove(entry.getKey());
+					usermeta.remove(set);
+					break;
+				}
+			}
+		}
+		
+		UserMeta um = null;
+		//剩下的map里的数据需要保存
+		for(Map.Entry<String, String> entry:map.entrySet()){
+			//得到需要更新的key
+			String key = "my028888_"+entry.getKey();
+				um = new UserMeta();
+				um.setUmetakey(key);
+				um.setUmetavalue(entry.getValue());
+				um.setUuserid(user);
+				newusermeta.add(um);
+		}
+		user.setUsermeta(newusermeta);
+		daouserper.updateUser(user);
+		return "updateok";
+	}
+	
+	@Override
+	public String opuserpass(String userid, String oldpass, String newpass) {
+		Users user = daouserper.useridinfo(Integer.parseInt(userid));
+		if(user.getUserpass().equals(wordpass.WordpressEncrypt(oldpass, user.getUserpass().substring(4, 12)))){
+			user.setUserpass(wordpass.WordpressEncrypt(newpass, password.getPass(8)));
+			daouserper.updateUser(user);
+			return "updatepassok";
+		}else{
+			return "updatepasserror";
+		}
+	}
+	/*
+	 * (non-Javadoc)
+	 * @see springMVC.NLoveB.service.iter.SerUserInfoIter#opuserpass(java.lang.String, java.lang.String)
+	 * 通过邮件连接找回密码 emailkey里面包含了userid  和 时间的加密，此时我们只需要获得userid即可
+	 */
+	@Override
+	public String opuserpass(String newpass, String emailkey) {
+		//获得userid
+		Map<String, Object> decryptKey = null;
+		try {
+			decryptKey = password.getDecryptKey(emailkey);
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if(null==decryptKey){
+			return "err";
+		}else{
+			int userid = (int) decryptKey.get("userid");
+			//return uppassok
+			return daouserper.updatePassword(userid,wordpass.WordpressEncrypt(newpass, password.getPass(6)));
+		}
+	}
+	@Override
+	public String cleanlostpass() {
+		//先查询出所有包括lostpass的字段信息
+		List<UserMeta> all = daouserper.alllostpass();
+		if(null==all||all.size()==0){
+			return "true";
+		}else{
+			String umid="";
+			for(UserMeta um:all){
+				//获得value
+				String value = um.getUmetavalue();
+				//判断时间是否过期
+				Map<String, Object> decryptKey = null;
+				try {
+					decryptKey = password.getDecryptKey(value);
+				} catch (ParseException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				Date date = (Date) decryptKey.get("date");
+				if(!password.overdate(date)){
+					umid = umid+um.getUmetaid()+",";
+				}
+			}
+			String[] umids = umid.substring(0, umid.length()-1).split(",");
+			daouserper.delalllostpass(umids);
+			return "true";
+		}
+	}
+
+	@Override
+	public String valuserlostpass(String emailkey) {
+		Map<String, Object> map = null;
+		try {
+			map = password.getDecryptKey(emailkey);
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		//获得userid和date
+		int userid = (int) map.get("userid");
+		List<UserMeta> um = daouserper.userlostpass(userid);
+		if(null==um||um.size()==0||um.size()>1){
+			//非法
+			return "-1";
+		}else{
+			UserMeta userMeta = null;
+			for(UserMeta m:um){
+				if(m.getUmetakey().equals("lostpass")){
+					userMeta = m;
+					//后续设置修改密码后就将这个子段删除
+					//break;
+				}
+			}
+
+			if(null==userMeta){
+				return "-1";
+			}
+			String value = userMeta.getUmetavalue();
+			if(value.equals(emailkey)){
+				//如果相同就表示这个emailkey存在，开始验证是否过期
+				Date d = (Date) map.get("date");
+				if(password.overdate(d)){
+					//未过期
+					return "1#"+userid;
+				}else{
+					//已过期
+					return "0";
+				}
+			}else{
+				//非法
+				return "-1";
+			}
+		}
+	}
+	@Override
+	public String adminalluser(String page, String pagesize) {
+		if(null == page || page.length()==0){
+			page="1";
+		}
+		if(null == pagesize || pagesize.length()==0){
+			pagesize="10";
+		}
+		int usercount = ((Number)daouserper.usercount().get(0)).intValue();
+		List<Users> allUser = daouserper.allUser(Integer.parseInt(page), Integer.parseInt(pagesize),usercount);
+		
+		Map<String,Object> hashMap = new HashMap<String,Object>();
+		List<Map<String,Object>> list = new ArrayList<Map<String,Object>>();
+		Map<String,Object> map = null;
+		
+		for(Users u:allUser){
+			map = new HashMap<String,Object>();
+			map.put("userid", u.getUserid());
+			map.put("username", u.getUsername());
+			map.put("useremail", u.getUseremail());
+			map.put("redate", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(u.getRegdate()));
+			map.put("displayname", u.getDisplayname());
+			map.put("blogurl", u.getBlogurl());
+			Set<UserMeta> usermeta = u.getUsermeta();
+			for(UserMeta um:usermeta){
+				if(um.getUmetakey().equals("my028888_user_level")||um.getUmetakey().equals("my028888_user_qq") || um.getUmetakey().equals("my028888_user_weixin") || um.getUmetakey().equals("my028888_user_weibo")){
+					map.put(um.getUmetakey(), um.getUmetavalue());
+				}
+			}
+			list.add(map);
+		}
+		
+		hashMap.put("Rows",list);
+		hashMap.put("Total", usercount);
+		return JSON.toJSONString(hashMap);
+	}
+
+	@Override
+	public String upOperateUserInfo(String iden,String jsons) {
+		if(null==jsons||jsons.length()==0){
+			return "错误";
+		}else{
+			List<Map<String, String>> list = JSON.parseObject(jsons,new TypeReference<List<Map<String,String>>>(){});
+			if(null==list||list.size()==0){
+				return "格式错误";
+			}else{
+				int len = list.size();
+				Users[] users = new Users[len];
+				for(int i=0;i<len;i++){
+					Map<String, String> map = list.get(i);
+					users[i] = usersInfo(iden,map);
+				}
+				daouserper.updateUser(iden,users);
+			}
+			return "upuserok";
+		}
+	}
+	
+	/*
+	 * 用户信息都是以my028888_开始，后台的name字段已经添加，即注意和上面的方法（opuserinfo）比较，上面的方法适用于用户，前端页面没有添加my028888_
+	 */
+	private Users usersInfo(String iden,Map<String, String> map){
+		Users user = daouserper.useridinfo(Integer.parseInt(map.get("userid")));
+		if("-1".equals(iden)){
+			return user;
+		}
+		if(null==user){
+			return null;
+		}
+		user.setDisplayname(map.get("displayname"));
+		user.setBlogurl(map.get("blogurl"));
+		
+		//获得usermeta
+		Set<UserMeta> usermeta = user.getUsermeta();
+		//新的set集合
+		Set<UserMeta> newusermeta = new HashSet<UserMeta>();
+
+		map.remove("displayname");
+		map.remove("blogurl");
+		//需要更新的数据
+		for(Map.Entry<String, String> entry:map.entrySet()){
+			//得到需要更新的key
+			String key;
+			if(null==entry.getKey()){
+				continue;
+			}else{
+				key = entry.getKey();
+			}
+			UserMeta um = null;
+			for(UserMeta set:usermeta){
+				String umetakey = set.getUmetakey();
+				if(umetakey.equals(key)){
+					//相等就更新
+					set.setUmetavalue(entry.getValue());
+					newusermeta.add(set);
+				}else{
+					//不相等就插入
+					um = new UserMeta();
+					um.setUmetakey(key);
+					um.setUmetavalue(entry.getValue());
+					um.setUuserid(user);
+					newusermeta.add(um);
+				}
+			}
+		}
+		user.setUsermeta(newusermeta);
+		return user;
+	}
+
+}

@@ -1,0 +1,7 @@
+host=smtp.028888.net
+port=25
+username=webnet@028888.net
+password=Mm164895415
+mail.smtp.auth=true
+mail.smtp.starttls.enable=true
+fromer=webnet@028888.net

@@ -1,0 +1,112 @@
+package springMVC.NLoveB.po;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.PrimaryKeyJoinColumn;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+
+@Entity(name="term_taxonomy")
+@Table(name="blog_term_taxonomy")
+@DynamicInsert(value = true)
+@DynamicUpdate(value = true)
+public class Term_taxonomy {
+	private int termtaxonomyid;		//分类方法id
+	private Terms termid;				//分类id
+	private String taxonomy;		//方法名 category/post_tag
+	private String description;		//说明
+	private int parent;				//父分类方法id
+	private int count;				//有多少文章
+	
+	private Set<Term_relationships> term_relationships = new HashSet<Term_relationships>(0);
+/*
+ * CREATE TABLE IF NOT EXISTS `my028888_term_taxonomy` (
+  `term_taxonomy_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `term_id` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `taxonomy` varchar(32) NOT NULL DEFAULT '',
+  `description` longtext NOT NULL,
+  `parent` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `count` bigint(20) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`term_taxonomy_id`),
+  UNIQUE KEY `term_id_taxonomy` (`term_id`,`taxonomy`),
+  KEY `taxonomy` (`taxonomy`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=747 ;
+ */
+	
+	@Id
+	@Column(name = "term_taxonomy_id", unique = true, nullable = false,length=20)
+//	@GeneratedValue(generator = "idGenerator")
+//	@GenericGenerator(name ="idGenerator",strategy="foreign" ,parameters=@Parameter(name="property",value="term_relationships"))
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	public int getTermtaxonomyid() {
+		return termtaxonomyid;
+	}
+	public void setTermtaxonomyid(int termtaxonomyid) {
+		this.termtaxonomyid = termtaxonomyid;
+	}
+	
+	@Column(name = "taxonomy", unique = false, nullable = true,length=32)
+	public String getTaxonomy() {
+		return taxonomy;
+	}
+	public void setTaxonomy(String taxonomy) {
+		this.taxonomy = taxonomy;
+	}
+	
+	@Column(name = "description", unique = false, nullable = true,columnDefinition="LONGTEXT NOT NULL DEFAULT ''")
+	public String getDescription() {
+		return description;
+	}
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	
+	@Column(name = "parent", unique = false, nullable = true,columnDefinition="bigint(20) unsigned NOT NULL DEFAULT '0'")
+	public int getParent() {
+		return parent;
+	}
+	public void setParent(int parent) {
+		this.parent = parent;
+	}
+	
+	@Column(name = "count", unique = false, nullable = true,columnDefinition="bigint(20) NOT NULL DEFAULT '0'")
+	public int getCount() {
+		return count;
+	}
+	public void setCount(int count) {
+		this.count = count;
+	}
+	
+	//@MapsId
+	@OneToOne(cascade = {CascadeType.REFRESH,CascadeType.REMOVE},fetch = FetchType.EAGER,optional = false)
+	//@PrimaryKeyJoinColumn
+	@JoinColumn(name="term_id", unique = true, nullable = true)
+	public Terms getTermid() {
+		return termid;
+	}
+	public void setTermid(Terms termid) {
+		this.termid = termid;
+	}
+	
+	@PrimaryKeyJoinColumn
+	@OneToMany(cascade = CascadeType.REFRESH,fetch = FetchType.LAZY,mappedBy="taxonomyid")
+	public Set<Term_relationships> getTerm_relationships() {
+		return term_relationships;
+	}
+	public void setTerm_relationships(Set<Term_relationships> term_relationships) {
+		this.term_relationships = term_relationships;
+	}
+}

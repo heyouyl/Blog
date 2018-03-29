@@ -1,0 +1,48 @@
+package springMVC.NLoveB.dao.iter;
+
+import java.util.List;
+
+public interface DaoUserPermissionsIter {
+		public <T> List<T> dlogin(T t);				//登录用户密码
+		public <T> T useridinfo(int userid);				//根据id获得用户信息
+		public void changedstatus(int userid,int status);				//登录用户密码
+		
+		//修改用户信息
+		public <T> String updateUser(T t);
+		//修改用户信息
+		<T> String updateUser(String iden,T[] t);
+		//修改用户的密码
+		public String updatePassword(int userid,String newpass);
+		
+		//查找用户名或邮箱是否被注册
+		public <T> List<T> useremail(String username,String useremail);
+		
+		//根据用户名和用户邮箱获得用户实体
+		public <T> List<T> username(String username);
+		public <T> List<T> useremail(String useremail);
+		
+		//查询所有的lostpass数据
+		public <T> List<T> alllostpass();
+		//查询用户的lostpass数据
+		public <T> List<T> userlostpass(int userid);
+		//删除查询到的符合要求的lostpass
+		public void delalllostpass(String[] umids);
+		/**
+		 * 获得用户数据分页
+		 * @param page
+		 * @param pagesize
+		 * @return
+		 */
+		<T> List<T> allUser(int page,int pagesize,int usercount);		//获得文章数据 详细的
+		/**
+		 * 获得用户的数据大小
+		 * @return
+		 */
+		<T> List<T> usercount();
+		/**
+		 * 删除用户
+		 * @param userid
+		 * @return
+		 */
+		<T>String delUsers(T[] t);
+}

@@ -1,0 +1,294 @@
+package springMVC.NLoveB.controller.admin;
+
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.alibaba.fastjson.JSON;
+
+import springMVC.NLoveB.service.iter.MenusIter;
+import springMVC.NLoveB.service.iter.SerArticle_PageIter;
+import springMVC.NLoveB.service.iter.SerArticle_PostsIter;
+import springMVC.NLoveB.service.iter.SerCommentIter;
+import springMVC.NLoveB.service.iter.SerEhcacheIter;
+import springMVC.NLoveB.service.iter.SerGuangbdIter;
+import springMVC.NLoveB.service.iter.SerLinksIter;
+import springMVC.NLoveB.service.iter.SerTermsIter;
+import springMVC.NLoveB.service.iter.SerUserInfoIter;
+import springMVC.NLoveB.utils.configProperties;
+
+
+@Controller
+@RequestMapping("/admin")
+public class AdminIndex {
+	@Resource(name="serTerms")
+	private SerTermsIter serterms;
+	@Resource(name="sermenus")
+	private MenusIter sermenus;
+	@Resource(name="serehcache")
+	private SerEhcacheIter serehcache;
+	@Resource(name="serarposts")
+	private SerArticle_PostsIter serarposts;
+	@Resource(name="serarpages")
+	private SerArticle_PageIter serarpages;
+	@Resource(name="seruserinfo")
+	private SerUserInfoIter seruserinfo;
+	@Resource(name="sercomment")
+	private SerCommentIter sercomment;
+	@Resource(name="serlinks")
+	private SerLinksIter serlinks;
+	@Resource(name="serGuangbd")
+	private SerGuangbdIter serGuangbd;
+	
+	@RequestMapping("/index")
+	public ModelAndView index(){
+		return new ModelAndView("admin/index");
+	}
+	@RequestMapping("/welcome")
+	public ModelAndView welcome(){
+		return new ModelAndView("admin/welcome");
+	}
+	@RequestMapping("/initable")
+	public ModelAndView initinformation(){
+		ModelAndView modelAndView = new ModelAndView("admin/util/myblog/initable");
+		System.out.println(configProperties.getProp("setinit"));
+		Map<String,String> map = JSON.parseObject(configProperties.getProp("setinit"), Map.class);
+		modelAndView.addObject("setinit", map);
+		modelAndView.addObject("categorylist",serterms.Termsnamelist("category"));
+		return modelAndView;
+	}
+	
+	@RequestMapping("/menumanager")
+	public ModelAndView menumanagers(String nowmenus){
+		ModelAndView modelAndView = new ModelAndView("admin/util/myblog/menumanager");
+		String web_menuopsition = (String) JSON.parseObject(configProperties.getProp("setinit"), Map.class).get("web_menuopsition");
+		Map<String,String> map =JSON.parseObject(web_menuopsition,Map.class);
+		
+		//获得菜单项，
+		if(null==nowmenus||nowmenus.length()==0){
+			modelAndView.addObject("nowmenus", map.get("topmenu"));
+		}else{
+			modelAndView.addObject("nowmenus", map.get(nowmenus));
+		}
+		modelAndView.addObject("mapmenus", map);
+		modelAndView.addObject("categorylist",serterms.Termsnamelist("category"));
+		return modelAndView;
+	}
+	//用于菜单管理页面的菜单显示
+	@RequestMapping("/addarticle")
+	public ModelAndView addarticle(String arid){
+		ModelAndView modelAndView = new ModelAndView("admin/util/myblog/addarticle");
+		if(null==arid||arid.length()==0){
+			
+		}else{
+			modelAndView.addObject("updataar",serarposts.getarticleMap(arid));
+		}
+		modelAndView.addObject("categorylist",serterms.Termsnamelist("category"));
+		return modelAndView;
+	}
+	//用于菜单管理页面的菜单显示
+	@RequestMapping("/catmanager")
+	public ModelAndView catManager(){
+		ModelAndView modelAndView = new ModelAndView("admin/util/myblog/catmanager");
+		return modelAndView;
+	}
+	
+	
+	//用于菜单管理页面的菜单显示
+	@RequestMapping(value="/menusdata",produces="application/json;charset=UTF-8")
+	public @ResponseBody String Menusdata(@RequestParam String page,@RequestParam String pagesize,@RequestParam String menusname){
+		return sermenus.getmenudate(menusname);
+	}
+	//获得分类数据
+	@RequestMapping(value="/categoryall", produces="application/json;charset=UTF-8")
+	public @ResponseBody String modelcat(){
+		return serterms.getTermsnameid("category");
+	}
+	
+	//获得分类数据
+	@RequestMapping("/ehcache")
+	public ModelAndView ehcache(String nowehcache){
+		ModelAndView model = new ModelAndView("admin/util/myblog/ehcache");
+		String[] ehcachenames = serehcache.ehcachenames();
+		
+		if(null==nowehcache||nowehcache.length()==0){
+			model.addObject("nowehcache", ehcachenames[0].toString());
+		}else{
+			model.addObject("nowehcache", nowehcache);
+		}
+		
+		model.addObject("ehcachename", ehcachenames);
+		return model;
+	}
+	@RequestMapping("/ehcachedata")
+	public @ResponseBody String ehcachedata(@RequestParam String nowehcache){
+		return serehcache.ehcachenamekeys(nowehcache);
+	}
+	
+	//管理 获得文章数据
+	@RequestMapping("/allarticle")
+	public ModelAndView allarticlelist(){
+		return new ModelAndView("admin/util/myblog/allarticle");
+	}
+	//获得分类数据
+	@RequestMapping(value="/articledata", produces="application/json;charset=UTF-8",method=RequestMethod.POST)
+	public @ResponseBody String allarticledata(String page,String pagesize,String poststatus){
+		return serarposts.adminallpostsjson(page, pagesize, poststatus);
+	}
+	
+	
+	//所有的页面
+	@RequestMapping("/allpage")
+	public ModelAndView allpage(){
+		ModelAndView modelAndView = new ModelAndView("admin/util/myblog/allpage");
+		return modelAndView;
+	}
+	//所有的页面数据
+	@RequestMapping(value="/allpagedata", produces="application/json;charset=UTF-8",method=RequestMethod.POST)
+	public @ResponseBody String allpagedata(String page,String pagesize){
+		return serarpages.adminpgesjson(page, pagesize);
+	}
+	//用于页面管理 编辑某个页面
+	@RequestMapping("/addpages")
+	public ModelAndView addpages(String arid){
+		ModelAndView modelAndView = new ModelAndView("admin/util/myblog/addarticle");
+		if(null==arid||arid.length()==0){
+			
+		}else{
+			modelAndView.addObject("updataar",serarpages.getPageid(arid));
+		}
+		return modelAndView;
+	}
+	
+	//所有的公告页面
+	@RequestMapping("/allnotice")
+	public ModelAndView allNotice(){
+		ModelAndView modelAndView = new ModelAndView("admin/util/myblog/allnotice");
+		return modelAndView;
+	}
+	
+	//公告的数据
+	@RequestMapping(value="/allnoticedata", produces="application/json;charset=UTF-8",method=RequestMethod.POST)
+	public @ResponseBody String allnoticedata(String page,String pagesize){
+		return serarpages.adminnoticejson(page, pagesize);
+	}
+	
+	//添加公告
+	@RequestMapping("/addnotice")
+	public ModelAndView addNotice(String arid){
+		ModelAndView modelAndView = new ModelAndView("admin/util/myblog/addnotice");
+		if(null==arid||arid.length()==0){
+			
+		}else{
+			modelAndView.addObject("updataar",serarpages.getPageid(arid));
+		}
+		return modelAndView;
+	}
+	//用户管理
+	//会员管理
+	@RequestMapping("/manageruser")
+	public ModelAndView manageruser(){
+		ModelAndView modelAndView = new ModelAndView("admin/util/myblog/manageruser");
+		return modelAndView;
+	}
+	//会员管理得到数据
+	@RequestMapping(value="/manageruserdata", produces="application/json;charset=UTF-8",method=RequestMethod.POST)
+	public @ResponseBody String manageruserdata(String page,String pagesize){
+		return seruserinfo.adminalluser(page, pagesize);
+	}
+	
+	//所有评论管理页面
+	@RequestMapping("/commentall")
+	public ModelAndView commentall(){
+		ModelAndView modelAndView = new ModelAndView("admin/util/myblog/commentall");
+		return modelAndView;
+	}
+	
+	//已通过评论
+	@RequestMapping("/commentpass")
+	public ModelAndView commentpass(){
+		ModelAndView modelAndView = new ModelAndView("admin/util/myblog/commentpass");
+		return modelAndView;
+	}
+	
+	//待审核评论
+	@RequestMapping("/commentaudit")
+	public ModelAndView commentaudit(){
+		ModelAndView modelAndView = new ModelAndView("admin/util/myblog/commentaudit");
+		return modelAndView;
+	}
+	
+	//垃圾评论
+	@RequestMapping("/commentdumps")
+	public ModelAndView commentdumps(){
+		ModelAndView modelAndView = new ModelAndView("admin/util/myblog/commentdumps");
+		return modelAndView;
+	}
+	
+	//回收站评论
+	@RequestMapping("/commenthsz")
+	public ModelAndView commenthsz(){
+		ModelAndView modelAndView = new ModelAndView("admin/util/myblog/commenthsz");
+		return modelAndView;
+	}
+	//评论数据
+	@RequestMapping(value="/commensdata", produces="application/json;charset=UTF-8",method=RequestMethod.POST)
+	public @ResponseBody String commenthszdata(String page,String pagesize,String iden){
+		return sercomment.comAll(page, pagesize, iden);
+	}
+	
+	//新增page
+	@RequestMapping("/addpage")
+	public ModelAndView addpage(String arid){
+		ModelAndView modelAndView = new ModelAndView("admin/util/myblog/addpage");
+		if(null==arid||arid.length()==0){
+			
+		}else{
+			modelAndView.addObject("updataar",serarpages.getPageid(arid));
+		}
+		return modelAndView;
+	}
+	
+	
+	@RequestMapping("/linkmanager")
+	public ModelAndView linkManager(){
+		ModelAndView modelAndView = new ModelAndView("admin/util/myblog/link");
+		return modelAndView;
+	}
+	
+	//获得分类数据
+	@RequestMapping(value="/linkegoryall", produces="application/json;charset=UTF-8",method=RequestMethod.POST)
+	public @ResponseBody String modellink(){
+		return serlinks.allAdminLinks();
+	}
+	
+	
+	//垃圾评论
+	@RequestMapping("/addguangBlog")
+	public ModelAndView addguangBlog(){
+		ModelAndView modelAndView = new ModelAndView("admin/util/myblog/addguangBlog");
+		return modelAndView;
+	}
+	//获得分类数据
+	@RequestMapping(value="/guangBlogDatas", produces="application/json;charset=UTF-8",method=RequestMethod.POST)
+	public @ResponseBody String guangBlogDatas(){
+		return serGuangbd.getGuangbdJsonAll();
+	}
+	
+	@RequestMapping("/indexslide")
+	public ModelAndView indexslide(){
+		
+		ModelAndView modelAndView = new ModelAndView("admin/util/myblog/indexslide");
+		modelAndView.addObject("maps", serGuangbd.getIndexslide());
+		return modelAndView;
+	}
+}

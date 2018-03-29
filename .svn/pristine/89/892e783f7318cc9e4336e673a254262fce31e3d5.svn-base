@@ -1,0 +1,16 @@
+package springMVC.NLoveB.utils;
+
+import org.springframework.orm.hibernate4.HibernateTemplate;
+
+/**
+ * @author likilone
+ *  定义一些常用变量
+ */
+public class StringOrObjectUtil {
+	//字符串的变量
+	public static String hql;		//使用于hql的常用变量
+	
+	//对象的变量
+	public static HibernateTemplate hibernateTemplate = new HibernateUtil().getHibernateTemplate();
+
+}

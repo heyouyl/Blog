@@ -1,0 +1,39 @@
+package springMVC.NLoveB.interceptor;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
+/*
+ * 分别实现预处理
+ * 后处理（调用了Service并返回ModelAndView，但未进行页面渲染）
+ * 返回处理（已经渲染了页面） 
+ * 在preHandle中，可以进行编码、安全控制等处理； 
+ * 在postHandle中，有机会修改ModelAndView； 
+ * 在afterCompletion中，可以根据ex是否为null判断是否发生了异常，进行日志记录。
+ */
+public class init extends HandlerInterceptorAdapter {
+
+	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
+			throws Exception {
+		String url = request.getRequestURI();
+
+		if(request.getMethod().equalsIgnoreCase("GET")){
+			request.setAttribute("sss", "dfdsfdsfds");
+			System.out.println("sssss1="+request.getAttribute("sss"));
+			response.sendRedirect(url.replace(".do", ".html"));
+		}
+		
+		return true;
+	}
+
+	public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler,
+			ModelAndView modelAndView) throws Exception {
+	}
+
+	public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
+			throws Exception {
+	}
+
+}

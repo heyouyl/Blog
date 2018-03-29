@@ -1,0 +1,115 @@
+package springMVC.NLoveB.utils;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
+public class LogWriterFile{
+	private static String pathfilenew = null;
+	private static String pathnew = null;
+	private static File file = null;
+	private LogWriterFile(){
+		
+	}
+
+	// 获得最后一个文件
+	//第一次运行就创建文件
+	private static void getfiter() {
+		pathfilenew = EnumPath.loginregister_log.getClassPath();
+		File dir = new File(pathfilenew);
+		if (!dir.exists() && !dir.isDirectory()) {
+			// 如果log目录不存在，就创建，需要指明的是
+			// 我这里是测试就仅仅只判断log目录存在否
+			dir.mkdir();
+			//开始创建初始文件
+			pathnew = pathfilenew+"/1.txt";
+			creatfile(pathnew);
+		} else {
+			
+			File[] list = dir.listFiles();
+			if(null == list ||list.length <=0 ){
+				//如果log目录下没有文件就创建新文件
+				pathnew = pathfilenew+"/1.txt";
+				creatfile(pathnew);
+			}else{
+				/*
+				 * 需要判断文件大小，如果文件为100行，我们这里数据是3行，就新建文件
+				 */
+				file = list[list.length-1];
+				//如果行数大于等于3就创建一个文件，此处true是大于等于3
+				if(ifsize()){
+					//获得新的文件名全路劲
+					pathnew = pathfilenew + "/"+(Integer.parseInt(file.getName().split(EnumPath.spot.getClassPath())[0])+1) +".txt";
+					System.out.println(pathnew);
+					//下面开始创建新的文件
+					creatfile(pathnew);
+				}
+			}
+		}
+	}
+
+	//判断文件大小行数为3??
+	private static boolean ifsize() {
+		int count = 0;		
+		try {
+			InputStream input = new FileInputStream(file);
+			BufferedReader b = new BufferedReader(new InputStreamReader(input));
+			String value = b.readLine();
+			if(value != null) {
+				while(value !=null){
+					count++;
+					value = b.readLine();
+				}
+			}
+			b.close();
+			input.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if(count>=3){
+			return true;
+		}else{
+			return false;	
+		}
+	}
+
+
+	//创建文件
+	private static void creatfile(Object t) {
+		try {
+			/*
+			 * 创建文件对象，因为是新创建的文件夹，所以文件对象的目录是自定义的1.txt
+			 * 为新的空文件，无需判断1.txt的大小。
+			 */
+			file = new File((String) t);
+			file.createNewFile();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	//写入数据
+	public static void writerlog(Object t) {
+		getfiter();
+		try {
+			//true表示追加，默认false替换
+			FileWriter fw = new FileWriter(file,true);
+			BufferedWriter bw = new BufferedWriter(fw);
+			bw.write((String)t);
+			//输入换行符
+			bw.newLine();
+			//清空缓存
+			bw.flush();
+			//关闭文件流
+			fw.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		}
+}

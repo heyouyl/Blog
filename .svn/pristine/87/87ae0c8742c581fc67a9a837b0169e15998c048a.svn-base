@@ -1,0 +1,14 @@
+package springMVC.NLoveB.dao.iter;
+
+import java.util.List;
+
+public interface DaoOptionsIter<T> {
+	public List<T> dautooption();
+	
+	public String saveupdateop(String opname,String opvalue);
+
+	String deleteop(String opname);
+
+	//模糊查找指定opname的数据
+	List<T> dautooptionOpname(String opname);
+}

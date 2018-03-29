@@ -1,0 +1,19 @@
+package springMVC.NLoveB.dao.iter;
+
+import java.util.List;
+
+import springMVC.NLoveB.po.Posts;
+
+public interface DaoArticle_pagesIter {
+	<T> List<T> arcount();		//获得page的总数据
+	<T> List<T> daogetpages(int page,int pagesize,int arcount);//获得page的分页数据
+	
+	/**
+	 * 获得公告数据
+	 * @param ipage
+	 * @param ipagesize
+	 * @param arcount
+	 * @return
+	 */
+	<T> List<T> daogetnoticess(int ipage, int ipagesize, int arcount);
+}

@@ -1,0 +1,18 @@
+package springMVC.NLoveB.service.iter;
+
+import java.util.List;
+import java.util.Map;
+
+public interface MenusIter {
+	//admin
+	String updateMenus(String saverows,String nowmenus);	//更新菜单
+	String deleteMenus(String saverows,String nowmenus);	//删除菜单
+	String getmenudate(String menusname);						//获得具体的菜单数据 参数为具体菜单的名字
+	
+	
+	//guest
+	List<Map<String, String>> guestmenus(String menuname);						//获得顶部菜单
+	
+	
+	
+}

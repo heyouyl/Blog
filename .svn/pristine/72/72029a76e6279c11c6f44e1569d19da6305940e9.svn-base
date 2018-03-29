@@ -1,0 +1,173 @@
+package springMVC.NLoveB.dao.impl;
+
+import java.util.List;
+
+import org.hibernate.criterion.DetachedCriteria;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Restrictions;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Repository;
+
+import springMVC.NLoveB.dao.iter.DaoCommentIter;
+import springMVC.NLoveB.po.Comments;
+import springMVC.NLoveB.utils.StringOrObjectUtil;
+
+@Repository("daocomment")
+public class DaoCommentImpl implements DaoCommentIter {
+	//private HibernateTemplate hibernateTemplate = new HibernateUtil().getHibernateTemplate();
+	
+	@Cacheable(value="commentsCache",key="'getComment'+#postid")
+	@Override
+	public List<Comments> getComment(int postid) {
+		/*
+		 * 评论，默认不潜套，获得一条评论的同时获得父评论
+		 * 评论约束条件
+		 * comment_approved 不能是spam（垃圾） trash（回收站）0(审核)
+		 * comment_approved 是1：通过的评论
+		 * 需要获得字段信息
+		 * comment_ID：自增唯一ID
+		 * comment_post_ID：对应文章ID 
+		 * comment_author：评论者 
+		 * comment_author_email：评论者邮箱 
+		 * comment_author_url：评论者网址 
+		 * comment_author_IP：评论者IP 
+		 * comment_date：评论时间 
+		 * comment_content：评论正文 
+		 * comment_parent：父评论ID 
+		 * user_id：评论者用户ID（不一定存在）
+		 */
+		
+		//获得该文章下面的所有评论信息
+		StringOrObjectUtil.hql = "from comments  where commenetapproved=:commenetapproved and commentpostid=:commentpostid";
+		String[] params = {"commenetapproved","commentpostid"};
+		Object[]	values ={"1",postid};
+		
+		List<Comments> list = (List<Comments>) StringOrObjectUtil.hibernateTemplate.findByNamedParam(StringOrObjectUtil.hql, params, values);
+		
+		return list;
+	}
+	
+	@Cacheable(value="commentsCache",key="'getCommentParent'+#postid+'c'+#nowcommeneid+'c'+#parentid")
+	@Override
+	public Comments getCommentParent(int postid, int nowcommeneid, int parentid) {
+		//获得父评论
+		StringOrObjectUtil.hql = "from comments  where commenetapproved=:commenetapproved and commentid=:commentid and commentpostid=:commentpostid";
+		String[] params = {"commenetapproved","commentid","commentpostid"};
+		Object[]	values ={"1",parentid,postid};
+		Comments comment = (Comments) StringOrObjectUtil.hibernateTemplate.findByNamedParam(StringOrObjectUtil.hql, params, values).get(0);
+
+		return comment;
+	}
+
+	@Override
+	public Comments saveupdateComments(Comments comment) {
+		StringOrObjectUtil.hibernateTemplate.saveOrUpdate(comment);
+		return comment;
+	}
+
+	@Override
+	@Cacheable(value="commentsCache",key="'UseridCommentSize'+#userid")
+	public <T> List<T> UseridCommentSize(int userid) {
+		StringOrObjectUtil.hql = "select count(*) from comments  where commenetuserid=:commenetuserid";
+		return (List<T>) StringOrObjectUtil.hibernateTemplate.findByNamedParam(StringOrObjectUtil.hql,"commenetuserid",userid);
+	}
+
+	@Override
+	@Cacheable(value="commentsCache",key="'UseridComment'+#page+'p'+#pagesize+'p'+#comcount+'p'+#userid")
+	public <T> List<T> UseridComment(int userid, int page, int pagesize, int comcount) {
+		//获得分页数据
+		int fristint = (page==1?0:((page-1)*pagesize));	//获得开始数据 0 10 20 30
+		int endint = (comcount-((page-1)*pagesize)<pagesize?(comcount-((page-1)*pagesize)):pagesize);	//获得当前页码的数据，1到10条
+		//创建DetachedCriteria对象
+		DetachedCriteria criteria = DetachedCriteria.forClass(Comments.class);
+		criteria.add(Restrictions.eq("commenetuserid", userid));
+		criteria.add(Restrictions.or(Restrictions.eq("commenetapproved","1"),Restrictions.eq("commenetapproved","0")));
+		criteria.addOrder(Order.desc("commentid"));
+				
+		List<T> list = (List<T>) StringOrObjectUtil.hibernateTemplate.findByCriteria(criteria, fristint, endint);
+
+		return list;
+	}
+
+	@Override
+	public <T> List<T> comcount(String iden) {
+		if(iden.equals("all")){
+			StringOrObjectUtil.hql = "select count(*) from comments";
+			return (List<T>) StringOrObjectUtil.hibernateTemplate.find(StringOrObjectUtil.hql);
+		}else{
+			StringOrObjectUtil.hql = "select count(*) from comments  where commenetapproved=:commenetapproved";
+			return (List<T>) StringOrObjectUtil.hibernateTemplate.findByNamedParam(StringOrObjectUtil.hql,"commenetapproved",iden);
+		}
+	}
+
+	@Override
+	public <T> List<T> Comments(String iden, int page, int pagesize, int comcount) {
+		//获得分页数据
+		int fristint = (page==1?0:((page-1)*pagesize));	//获得开始数据 0 10 20 30
+		int endint = (comcount-((page-1)*pagesize)<pagesize?(comcount-((page-1)*pagesize)):pagesize);	//获得当前页码的数据，1到10条
+		//创建DetachedCriteria对象
+		DetachedCriteria criteria = DetachedCriteria.forClass(Comments.class);
+		if(!iden.equals("all")){
+			criteria.add(Restrictions.eq("commenetapproved", iden));
+		}
+		criteria.addOrder(Order.desc("commentid"));		
+		List<T> list = (List<T>) StringOrObjectUtil.hibernateTemplate.findByCriteria(criteria, fristint, endint);
+
+		return list;
+	}
+
+	@Override
+	public String updateoperateComment(String iden, Comments[] comments) {
+		int i=comments.length;
+		String poids = "";
+		if("-3".equals(iden)){
+			//删除
+			for(int k=0;k<i;k++){
+				poids = poids + comments[k].getCommentpostid()+",";
+				StringOrObjectUtil.hibernateTemplate.delete(comments[k]);
+			}
+		}else if("-2".equals(iden)){
+			//回收站
+			for(int k=0;k<i;k++){
+				poids = poids + comments[k].getCommentpostid()+",";
+				comments[k].setCommenetapproved("trash");
+				StringOrObjectUtil.hibernateTemplate.update(comments[k]);
+			}
+		}else if("-1".equals(iden)){
+			//垃圾
+			for(int k=0;k<i;k++){
+				poids = poids + comments[k].getCommentpostid()+",";
+				comments[k].setCommenetapproved("spam");
+				StringOrObjectUtil.hibernateTemplate.update(comments[k]);
+			}
+		}else if("-0".equals(iden)){
+			//带审核
+			for(int k=0;k<i;k++){
+				poids = poids + comments[k].getCommentpostid()+",";
+				comments[k].setCommenetapproved("0");
+				StringOrObjectUtil.hibernateTemplate.update(comments[k]);
+			}
+		}else{
+			//通过
+			for(int k=0;k<i;k++){
+				poids = poids + comments[k].getCommentpostid()+",";
+				comments[k].setCommenetapproved("1");
+				StringOrObjectUtil.hibernateTemplate.update(comments[k]);
+			}
+		}
+		// TODO Auto-generated method stub
+		return poids.substring(0, poids.length()-1);
+	}
+
+	@Override
+	public Comments[] getComment(int[] comids) {
+		int i = comids.length;
+		Comments[] comments = new Comments[i];
+		for(int k=0;k<i;k++){
+			comments[k]=StringOrObjectUtil.hibernateTemplate.get(Comments.class, comids[k]);
+		}
+		// TODO Auto-generated method stub
+		return comments;
+	}
+
+}

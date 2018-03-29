@@ -1,0 +1,16 @@
+package springMVC.NLoveB.utils;
+
+import org.hibernate.SessionFactory;
+import org.springframework.orm.hibernate4.HibernateTemplate;
+
+public class HibernateUtil {
+	
+	private static HibernateTemplate hibernateTemplate;
+
+	public void setSessionFactory(SessionFactory sessionFactory) {
+		hibernateTemplate = new HibernateTemplate(sessionFactory);
+	}
+	public HibernateTemplate getHibernateTemplate() {
+		return hibernateTemplate;
+	}
+}

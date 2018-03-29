@@ -1,0 +1,10 @@
+<!-- div class="widget widget_hot">
+	<h3>热门文章</h3>
+	<ul>
+        <li><a href=""><span class="thumbnail"><img class="thumb" data-original="${contextPath}upload/images/excerpt.jpg" src="${contextPath}upload/images/excerpt.jpg" alt=""></span><span class="text">php如何判断一个日期的格式是否正确</span><span class="muted"><i class="glyphicon glyphicon-time"></i> 2016-1-4 </span><span class="muted"><i class="glyphicon glyphicon-eye-open"></i> 120</span></a></li>
+        <li><a href=""><span class="thumbnail"><img class="thumb" data-original="${contextPath}upload/images/excerpt.jpg" src="${contextPath}upload/images/excerpt.jpg" alt=""></span><span class="text">php如何判断一个日期的格式是否正确</span><span class="muted"><i class="glyphicon glyphicon-time"></i> 2016-1-4 </span><span class="muted"><i class="glyphicon glyphicon-eye-open"></i> 120</span></a></li>
+        <li><a href=""><span class="thumbnail"><img class="thumb" data-original="${contextPath}upload/images/excerpt.jpg" src="${contextPath}upload/images/excerpt.jpg" alt=""></span><span class="text">php如何判断一个日期的格式是否正确</span><span class="muted"><i class="glyphicon glyphicon-time"></i> 2016-1-4 </span><span class="muted"><i class="glyphicon glyphicon-eye-open"></i> 120</span></a></li>
+        <li><a href=""><span class="thumbnail"><img class="thumb" data-original="${contextPath}upload/images/excerpt.jpg" src="${contextPath}upload/images/excerpt.jpg" alt=""></span><span class="text">php如何判断一个日期的格式是否正确</span><span class="muted"><i class="glyphicon glyphicon-time"></i> 2016-1-4 </span><span class="muted"><i class="glyphicon glyphicon-eye-open"></i> 120</span></a></li>
+        <li><a href=""><span class="thumbnail"><img class="thumb" data-original="${contextPath}upload/images/excerpt.jpg" src="${contextPath}upload/images/excerpt.jpg" alt=""></span><span class="text">php如何判断一个日期的格式是否正确</span><span class="muted"><i class="glyphicon glyphicon-time"></i> 2016-1-4 </span><span class="muted"><i class="glyphicon glyphicon-eye-open"></i> 120</span></a></li>
+	</ul>
+</div -->

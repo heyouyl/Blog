@@ -1,0 +1,173 @@
+package springMVC.NLoveB.service.impl;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+
+import springMVC.NLoveB.dao.iter.DaoArticle_postsIter;
+import springMVC.NLoveB.dao.iter.DaotermsIter;
+import springMVC.NLoveB.po.Term_relationships;
+import springMVC.NLoveB.po.Term_taxonomy;
+import springMVC.NLoveB.po.Terms;
+import springMVC.NLoveB.service.iter.SerTermsIter;
+import springMVC.NLoveB.utils.Chinese;
+
+@Service("serTerms")
+public class SerTermsImpl implements SerTermsIter {
+	@Resource(name="daoterms")
+	private DaotermsIter dterms;
+	@Resource(name="daoarposts")
+	private DaoArticle_postsIter darpost;
+	
+	@Override
+	public String getTermsnameid(String taxonomyname) {
+		List<Terms> terms = dterms.getterms(taxonomyname);
+		
+		List<Map<String,Object>> list = new ArrayList<Map<String,Object>>();
+		Map<String,Object> maps = new HashMap<String,Object>();
+		int len = terms.size();
+		Map<String,Object> map = null;
+		for(int i=0;i<len;i++){
+			map = new HashMap<String,Object>();
+			map.put("flname", terms.get(i).getName());
+			map.put("flslug", terms.get(i).getSlug());
+			map.put("flid", terms.get(i).getTermid());
+			map.put("fldes", terms.get(i).getTerm_taxonomy().getDescription());
+			map.put("flcount", terms.get(i).getTerm_taxonomy().getCount());
+			list.add(map);
+		}
+		maps.put("Total", len);
+		maps.put("Rows",list);
+		return JSON.toJSONString(maps);
+	}
+	
+	@Override
+	public Map<String,Object> Termsnamelist(String taxonomyname) {
+		List<Terms> terms = dterms.getterms(taxonomyname.split("_")[0]);
+		Map<String,Object> map = new HashMap<String,Object>();
+		int len = terms.size();
+		
+		if ("category_count".equals(taxonomyname)) {
+			for(int i=0;i<len;i++){
+				map.put(terms.get(i).getSlug(), terms.get(i).getName()+"  "+terms.get(i).getTerm_taxonomy().getCount());
+			}
+			return map;			
+		}
+
+		for(int i=0;i<len;i++){
+			map.put(String.valueOf(terms.get(i).getTermid()), terms.get(i).getName());
+		}
+		return map;
+	}
+
+	@Override
+	public String saveupterms(String termsjson,String taxonomy) {
+		//获得一个JSONArray数组
+		JSONArray jsonArray = JSONArray.parseArray(termsjson);
+		int L = jsonArray.size();
+		
+		//定义我们的Object
+		Terms[] termss = new Terms[L];
+		Term_taxonomy tt = null;
+		Terms t = null;
+		
+		//给aop处理的数据
+		String ttids = "";
+		
+		//for循环，将每一个对象集合封装在一个map中
+		for(int i =0;i<L;i++){
+			//初始每一个对象
+//			termss[i] = new Terms();
+			JSONObject jsonObject = jsonArray.getJSONObject(i);
+			if((jsonObject.getString("__status")).equals("update")){
+				/*
+				 * 更新分类
+				 * 将term_relationships的object_id缓存删掉
+				 * 同时删除菜单的缓存（顶部菜单，导航菜单，下拉菜单，可以先进行验证，达到值删除部分缓存的目的）
+				 */
+				//获得Terms实体
+				Terms termsid = dterms.getTermsid(jsonObject.getIntValue("flid"));
+				termsid.setName(jsonObject.getString("flname"));	//分类名称
+				termsid.setSlug(Chinese.opChinese(jsonObject.getString("flslug")));	//分类缩略名
+				termsid.getTerm_taxonomy().setDescription(jsonObject.getString("fldes"));;
+
+				termss[i] = termsid;
+				ttids = ttids+termsid.getTerm_taxonomy().getTermtaxonomyid()+",";
+			}else if((jsonObject.getString("__status")).equals("add")){
+				t = new Terms();
+				t.setName(jsonObject.getString("flname"));
+				t.setSlug(Chinese.opChinese(jsonObject.getString("flslug")));	//分类缩略名
+				tt = new Term_taxonomy();
+				tt.setTaxonomy(taxonomy);
+				tt.setDescription(jsonObject.getString("fldes"));
+				tt.setTermid(t);
+				t.setTerm_taxonomy(tt);
+				termss[i]=t;
+			}else{
+				return null;
+			}
+		}
+		String saveorupdate = dterms.saveorupdate(termss);
+		if(saveorupdate.equals("saveorupok")){
+			if(null==ttids||ttids.length()==0){
+				return "true";
+			}else{
+				return ttids.substring(0, ttids.length()-1);
+			}
+		}else{
+			return "false";
+		}
+	}
+
+	@Override
+	public String removeterms(String termsids) {
+		/*
+		 * 删除分类
+		 * 将term_relationships的taxonomy_id设置为1（即未分类）
+		 * 同时删除object_id的缓存
+		 * 同时删除菜单的缓存（顶部菜单，导航菜单，下拉菜单，可以先进行验证，达到值删除部分缓存的目的）
+		 */
+
+		String[] strhbid = termsids.split(",");
+		int L = strhbid.length;
+		int[] ii = new int[L];
+		for(int i=0;i<L;i++){
+			ii[i] = Integer.parseInt(strhbid[i]);
+		}
+		uprelationships(strhbid);
+		return dterms.deleterms(ii);
+	}
+
+	@Override
+	public Term_taxonomy categoryuncat() {
+		
+		return dterms.uncategorized().getTerm_taxonomy();
+	}
+
+	@Override
+	public void uprelationships(String[] termsids) {
+		
+		int len = termsids.length;
+		for(int i=0;i<len;i++){
+			List<Term_relationships> relationships = dterms.relationships(Integer.parseInt(termsids[i]));
+					
+			int L= relationships.size();
+			
+			Term_relationships[] tr = new Term_relationships[L];
+			for(int j=0;j<L;j++){
+				tr[j] = relationships.get(j);
+			}
+			dterms.updaterelationships(tr);
+		}
+		
+	}
+}

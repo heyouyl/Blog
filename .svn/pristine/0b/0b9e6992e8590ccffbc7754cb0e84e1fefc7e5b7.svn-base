@@ -1,0 +1,90 @@
+package springMVC.NLoveB.utils;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpSession;
+
+import springMVC.NLoveB.service.impl.KeymImpl;
+import springMVC.NLoveB.service.iter.KeymIter;
+
+public class Password {
+	@Resource(name= "keym")
+	private static KeymIter keym;
+	public static String getPass(int count){
+		/*
+		 * 0-9 A-Z a-z
+		 */
+		String pass = "qrs^t2i<jkl(mn%8PL[KJHGF]abc67)efg#hN90?QWuv@wxyz+1ER-T=Y/d:opDSAZ*XCVB>345U!IO=M";
+		String userpass="";
+		for(int i=0;i<count;i++){
+			userpass = userpass + pass.charAt((int) (Math.random() * 81));
+		}
+		return userpass;
+	}
+//	public static void main(String[] args) throws ParseException{
+//		System.out.println(getEmailValue(getEmailKey(1)));
+//
+//	}
+	public static String getSecretkey(int userid){
+		//获得一个数据数
+		String pass = getPass(64);
+		int pl = pass.length();
+		//获得时间
+		String format = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+		String mishi = userid+"#"+format;
+		mishi = keym.jiami("568598", mishi);
+		int len = mishi.length();
+		String str = "";
+		int k = 0;
+		for(int i=0;i<len;i++){
+			if(k<pl){
+				str=str+pass.charAt(k);
+				k++;
+			}
+			str=str+mishi.charAt(i);
+		}
+		return str;
+	}
+	public static Map<String,Object> getDecryptKey(String key) throws ParseException{
+		//获得这个key
+		int length = key.length();
+		int len = length/2;
+		String str = "";
+		for(int i=1;i<length;i+=2){
+			str=str+key.charAt(i);
+		}
+		String jiemi = keym.jiemi("568598", str);
+		int indexOf = jiemi.indexOf("#");
+		int userid = Integer.parseInt(jiemi.substring(0, indexOf));
+		String strdate = jiemi.substring(indexOf+1, jiemi.length());
+		
+		//将字符串转换为时间吧
+		SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
+		Date date = format.parse(strdate);
+		
+		Map<String,Object> map = new HashMap<String,Object>();
+		map.put("userid", userid);
+		map.put("date", date);
+		return map;
+	}
+	//判断时间是否过期（验证email链接是否过期，参数是emailvalue）
+	public static boolean overdate(Date starttime) {
+		long second = 0;
+		int ends = 60;
+	
+		Date endtime = new Date();
+		long diff = endtime.getTime() - starttime.getTime(); 	//相差多少毫秒  
+		second = diff / (1000 * 60 );  								//多少分钟
+
+		if(second >= ends || second < 0){
+			return false;		//如果大于定义的分钟标识已过期
+		}else{
+			return true;
+		}
+	}
+}

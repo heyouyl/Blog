@@ -1,0 +1,158 @@
+package springMVC.NLoveB.po;
+
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+
+/**
+ * 
+ * @ClassName:  Links   
+ * @Description:TODO(这里用一句话描述这个类的作用)   
+ * @author: likilone(何懮) 
+ * @date:   2018年3月29日 下午11:07:22   
+ *     
+ * @Copyright: 2018 www.028888.net Inc. All rights reserved.
+ */
+@Entity(name="links")
+@Table(name="blog_links")
+@DynamicInsert(value = true)
+@DynamicUpdate(value = true)
+public class Links {
+/*
+ * CREATE TABLE IF NOT EXISTS `my028888_links` (
+  `link_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `link_url` varchar(255) NOT NULL DEFAULT '',
+  `link_name` varchar(255) NOT NULL DEFAULT '',
+  `link_image` varchar(255) NOT NULL DEFAULT '',
+  `link_target` varchar(25) NOT NULL DEFAULT '',
+  `link_description` varchar(255) NOT NULL DEFAULT '',
+  `link_visible` varchar(20) NOT NULL DEFAULT 'Y',
+  `link_owner` bigint(20) unsigned NOT NULL DEFAULT '1',
+  `link_rating` int(11) NOT NULL DEFAULT '0',
+  `link_updated` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `link_rel` varchar(255) NOT NULL DEFAULT '',
+  `link_notes` mediumtext NOT NULL,
+  `link_rss` varchar(255) NOT NULL DEFAULT '',
+  PRIMARY KEY (`link_id`),
+  KEY `link_visible` (`link_visible`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=35 ;
+ */
+	private int linkid;
+	private String linkurl;
+	private String linkname;
+	private String linkimage;
+	private String linktarget;
+	private String linkdes;
+	private String linkvisible;
+	private int linkowner;		//添加者用户ID
+	private int linkrating;		//评分等级
+	private Date linkupdated;
+	private String linkrel;		//与我的关系
+	private String linknotes;
+	private String linkrss;
+	
+	@Id
+	@Column(name = "link_id", unique = true, nullable = false,length=20)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	public int getLinkid() {
+		return linkid;
+	}
+	public void setLinkid(int linkid) {
+		this.linkid = linkid;
+	}
+	
+	@Column(name = "link_url", unique = false, nullable = true,length=255)
+	public String getLinkurl() {
+		return linkurl;
+	}
+	public void setLinkurl(String linkurl) {
+		this.linkurl = linkurl;
+	}
+	@Column(name = "link_name", unique = false, nullable = true,length=255)
+	public String getLinkname() {
+		return linkname;
+	}
+	public void setLinkname(String linkname) {
+		this.linkname = linkname;
+	}
+	@Column(name = "link_image", unique = false, nullable = true,length=255)
+	public String getLinkimage() {
+		return linkimage;
+	}
+	public void setLinkimage(String linkimage) {
+		this.linkimage = linkimage;
+	}
+	@Column(name = "link_target", unique = false, nullable = true,length=25)
+	public String getLinktarget() {
+		return linktarget;
+	}
+	public void setLinktarget(String linktarget) {
+		this.linktarget = linktarget;
+	}
+	@Column(name = "link_description", unique = false, nullable = true,length=255)
+	public String getLinkdes() {
+		return linkdes;
+	}
+	public void setLinkdes(String linkdes) {
+		this.linkdes = linkdes;
+	}
+	@Column(name = "link_visible", unique = false, nullable = true,columnDefinition="varchar(20) NOT NULL DEFAULT 'Y'")
+	public String getLinkvisible() {
+		return linkvisible;
+	}
+	public void setLinkvisible(String linkvisible) {
+		this.linkvisible = linkvisible;
+	}
+	@Column(name = "link_owner", unique = false, nullable = true,columnDefinition="bigint(20) unsigned NOT NULL DEFAULT '1'")
+	public int getLinkowner() {
+		return linkowner;
+	}
+	public void setLinkowner(int linkowner) {
+		this.linkowner = linkowner;
+	}
+	@Column(name = "link_rating", unique = false, nullable = true,columnDefinition="int(11) NOT NULL DEFAULT '0'")
+	public int getLinkrating() {
+		return linkrating;
+	}
+	public void setLinkrating(int linkrating) {
+		this.linkrating = linkrating;
+	}
+	@Column(name = "link_updated", unique = false, nullable = true)
+	public Date getLinkupdated() {
+		return linkupdated;
+	}
+	public void setLinkupdated(Date linkupdated) {
+		this.linkupdated = linkupdated;
+	}
+	@Column(name = "link_rel", unique = false, nullable = true,columnDefinition="varchar(255) NOT NULL DEFAULT ''")
+	public String getLinkrel() {
+		return linkrel;
+	}
+	public void setLinkrel(String linkrel) {
+		this.linkrel = linkrel;
+	}
+	@Column(name = "link_notes", unique = false, nullable = true,columnDefinition="mediumtext NOT NULL")
+	public String getLinknotes() {
+		return linknotes;
+	}
+	public void setLinknotes(String linknotes) {
+		this.linknotes = linknotes;
+	}
+	@Column(name = "link_rss", unique = false, nullable = true,columnDefinition="varchar(255) NOT NULL DEFAULT ''")
+	public String getLinkrss() {
+		return linkrss;
+	}
+	public void setLinkrss(String linkrss) {
+		this.linkrss = linkrss;
+	}
+	
+	
+}

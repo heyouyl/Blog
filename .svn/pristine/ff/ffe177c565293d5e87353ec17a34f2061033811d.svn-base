@@ -1,0 +1,13 @@
+package springMVC.NLoveB.service.quartz;
+
+import javax.annotation.Resource;
+
+import springMVC.NLoveB.plugs.siteMap.SiteMapsIter;
+
+public class SiteMapQuartz {
+	@Resource(name="siteMapsImpl")
+	private SiteMapsIter siteMaps;
+	public void siteMapQuartz(){
+		siteMaps.siteMaps();
+	}
+}

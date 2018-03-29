@@ -1,0 +1,70 @@
+package springMVC.NLoveB.dao.impl;
+
+import java.util.List;
+
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Repository;
+
+import springMVC.NLoveB.dao.iter.DaoOptionsIter;
+import springMVC.NLoveB.po.Options;
+import springMVC.NLoveB.utils.StringOrObjectUtil;
+
+@Repository("daooptions")
+public class DaoOptionsImpl<T> implements DaoOptionsIter<T> {
+	//private HibernateTemplate hibernateTemplate = new HibernateUtil().getHibernateTemplate();
+	
+	//返回默认需要自动加载的数据，这里测试先只返回部分
+	@SuppressWarnings("unchecked")
+	@Cacheable(value="baseCache",key="'dautooption'")
+	@Override
+	public List<T> dautooption() {
+		StringOrObjectUtil.hql = "from options where optionname=:optionname or optionname=:optionname1 or optionname=:optionname2  or optionname=:optionname3 or optionname=:optionname4";
+		String[] params ={"optionname","optionname1","optionname2","optionname3","optionname4"};
+		Object[] values ={"posts_per_page","setinit","topmenu","topnav","latestmenu"};
+		return (List<T>) StringOrObjectUtil.hibernateTemplate.findByNamedParam(StringOrObjectUtil.hql, params, values);
+	}
+
+	@Override
+	public String saveupdateop(String opname,String opvalue) {
+		Options op = new Options();
+		op.setOptionname(opname);
+		op.setOptionvalue(opvalue);
+		StringOrObjectUtil.hql = "from options where optionname=:optionname";
+		@SuppressWarnings("unchecked")
+		List<Options> list = (List<Options>) StringOrObjectUtil.hibernateTemplate.findByNamedParam(StringOrObjectUtil.hql, "optionname", opname);
+		if(null==list||list.size()==0){
+			StringOrObjectUtil.hibernateTemplate.saveOrUpdate(op);
+			return "setok";
+		}else if(list.size()==1){
+			Options op1 = (Options) list.get(0);
+			op1.setOptionname(opname);
+			op1.setOptionvalue(opvalue);
+			StringOrObjectUtil.hibernateTemplate.saveOrUpdate(op1);
+			return "setok";
+		}else{
+			return "error";
+		}
+	}
+
+	@Override
+	public String deleteop(String opname) {
+		StringOrObjectUtil.hql = "from options where optionname=:optionname";
+		@SuppressWarnings("unchecked")
+		List<Options> list = (List<Options>) StringOrObjectUtil.hibernateTemplate.findByNamedParam(StringOrObjectUtil.hql, "optionname", opname);
+		if(null==list||list.size()==0){
+			
+		}else{
+			for(Options o:list){
+				StringOrObjectUtil.hibernateTemplate.delete(o);
+			}
+		}
+		return "delok";
+	}
+	
+	@Override
+	@Cacheable(value="dautooptionOpname",key="'opname'+#opname")
+	public List<T> dautooptionOpname(String opname) {
+		StringOrObjectUtil.hql = "from options where optionname like '"+opname+"%'";
+		return (List<T>) StringOrObjectUtil.hibernateTemplate.find(StringOrObjectUtil.hql);
+	}	
+}

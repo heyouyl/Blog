@@ -1,0 +1,31 @@
+根据taxonomyname获得所有的terms实体    集合			@Cacheable(value="taxonomynameCache",key="'taxonomyname'+'&@'+#taxonomyname")
+根据termsidid获得terms实体						@Cacheable(value="taxonomynameCache",key="'getTermsid'+'&@'+#categoryid")
+获得默认的terms									@Cacheable(value="taxonomynameCache",key="'uncategorized'")
+termtaxonomyid获得termtaxonomy实体				@Cacheable(value="taxonomynameCache",key="'getTerm_taxonomy'+'&@'+#categoryid")
+通过termsname categroy获得termtaxonomy实体		@Cacheable(value="taxonomynameCache",key="'getTerm_taxonomy'+'&@'+#termsname+'&@'+#categroy")
+通过termsid 获得relationships实体    集合			@Cacheable(value="taxonomynameCache",key="'relationships'+'&@'+#termsid")
+修改文章，修改分类	添加文章 添加分类 清除全部
+
+删除文章
+根据termtaxonomyid获得分类文章的id(不是tag)集合	@Cacheable(value="taxonomynameCache",key="'relationshipsObject'+'&@'+#categoryid")
+
+根据poid获得postmeta集合							@Cacheable(value="articleCache",key="'postmeta'+'&@'+#poid")
+获得分类最新一篇文章								@Cacheable(value="articleCache",key="'newtermsid'+'&@'+#termsid")
+根据文章id获得文章数据							@Cacheable(value="articleCache",key="'articlid'+'&@'+#arid")
+
+获得所有可见的友情链接							@Cacheable(value="baseCache",key="'allLinks'+'&@'+#visible")
+获得默认需要自动加载的数据	集合					@Cacheable(value="baseCache",key="'dautooption'")
+
+
+根据分类或tag获得文章分页 集合						@Cacheable(value="articleListCache",key="'termslug'+'&@'+#page+'&@'+#pagesize+'&@'+#arcount+'&@'+#termslug+'&@'+#categroy")
+分页获得文章列表    集合							@Cacheable(value="articleListCache",key="'article'+'&@'+#page+'&@'+#pagesize+'&@'+#arcount")
+用户中心的文章列表分页 集合						@Cacheable(value="articleListCache",key="'userarticle'+'&@'+#page+'&@'+#pagesize+'&@'+#arcount+'&@'+#poststatus+'&@'+#userid")
+admim获得用户的文章列表,根据参数获得不懂状态 集合	@Cacheable(value="adminpostListCache",key="'adminpost'+'&@'+#page+'&@'+#pagesize+'&@'+#arcount+'&@'+#poststatus")
+
+获得用户文章各种状态的的大小						@Cacheable(value="userstatusCache",key="'userarticleLength'+'&@'+#poststatus+'&@'+#userid")
+
+根据poid获得评论									@Cacheable(value="commentsCache",key="'getComment'+'&@'+#postid")
+获得当前评论的父评论								@Cacheable(value="commentsCache",key="'getCommentParent'+'&@'+#postid+'&@'+#nowcommeneid+'&@'+#parentid")
+获得user的评论的大小								@Cacheable(value="commentsCache",key="'UseridCommentSize'+'&@'+#userid")
+获得user的评论分页								@Cacheable(value="commentsCache",key="'UseridComment'+'&@'+#page+'&@'+#pagesize+'&@'+#comcount+'&@'+#userid")
+

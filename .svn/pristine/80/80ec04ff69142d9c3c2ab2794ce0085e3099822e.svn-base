@@ -1,0 +1,185 @@
+package springMVC.NLoveB.controller.user;
+
+import java.io.UnsupportedEncodingException;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.apache.commons.codec.binary.Base64;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
+
+import springMVC.NLoveB.service.iter.SerLinksIter;
+import springMVC.NLoveB.service.iter.SerLoginOrRegisteriter;
+import springMVC.NLoveB.service.iter.SerUserInfoIter;
+import springMVC.NLoveB.utils.cookieUtils;
+
+@Controller
+@RequestMapping("/user")
+public class LoginOrRegister {
+	@Resource(name="serloginregister")
+	private SerLoginOrRegisteriter serloginregister;
+	@Resource(name="serlinks")
+	private SerLinksIter serlinks;
+	@Resource(name="seruserinfo")
+	private SerUserInfoIter seruserinfo;
+	
+	//登录页面
+	@RequestMapping("/login")
+	public ModelAndView userlogin(String action,String iden,String emailkey,HttpServletRequest request){
+		ModelAndView model = new ModelAndView("login");
+		if(vSession(request.getSession(),"userlogin")!="-1"){
+			model = new ModelAndView("redirect:../index.html");
+		}else if(null==action||action.length()==0){
+			model.addObject("action", "login");
+			if(null==iden||iden.length()==0){
+
+			}else{
+				model.addObject("iden", iden);
+			}
+		}else if(action.equals("register")){
+			model.addObject("action", action);
+		}else{
+			model.addObject("action", action);//action=lostpassword
+			//如果emailkey存在就进行验证
+			if(null==emailkey||emailkey.length()<10){
+				model.addObject("lostpass", "no");	//关闭修改密码的对话框
+			}else{
+				//spring 已处理，所以无需解码
+				try {
+					emailkey = new String(Base64.decodeBase64(emailkey.getBytes("utf-8")), "utf-8");
+				} catch (UnsupportedEncodingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				/*
+				 * 验证如下信息
+				 * 当前用户是否有lostpass这个字段，没有就表示连接失效，表示定时任务已经删除了这条记录
+				 * 连接没失效就开始计算时间，如果时间过期，那么表示连接也失效，表示定时任务还没开始执行
+				 */
+				String valuserlostpass = seruserinfo.valuserlostpass(emailkey);
+				if(valuserlostpass.equals("0")){
+					model.addObject("lostpass", "yes0");	//已过期
+				}else if(valuserlostpass.equals("-1")){
+					model.addObject("lostpass", "yes-1");	//非法
+				}else{
+					model.addObject("lostpass", "yes1");	//未过期
+					model.addObject("lostpassuid", valuserlostpass.split("#")[1]);	//修改密码的userid
+				}
+				
+			}
+		}
+		
+		model.addObject("listlinks", serlinks.allLinks());
+		
+		return model;
+	}
+	
+	@RequestMapping(value="/clogin",method=RequestMethod.POST)
+	public String userclogin(HttpServletRequest request,HttpServletResponse response,String log,String pwd,String rememberme){
+		String str;
+		HttpSession session = request.getSession();
+		if(null==log||log.length()==0){
+			str="login.html?iden=nulluser";
+			removeSession(session,"userlogin");
+		}else if(null==pwd||pwd.length()==0){
+			str="login.html?iden=nullpass";
+			removeSession(session,"userlogin");
+		}else{
+			Map<String, Object> slogin = serloginregister.slogin(log, pwd);
+			if(slogin.get("loginok").equals("1")){
+				//登录成功
+				session.setAttribute("userlogin", null==slogin.get("user_level")?"0":slogin.get("user_level"));		//权限10为管理员   0为普通用户
+				session.setAttribute("userlog", slogin);
+				//根据用户组 返回不懂的管理页面
+				str="../admin/index.html";
+			}else if(slogin.get("loginok").equals("0")){
+				//密码错误
+				str="login.html?iden=errorpass";
+				removeSession(session,"userlogin");
+			}else if(slogin.get("loginok").equals("-1")){
+				//密码错误
+				str="login.html?iden=erroruser";
+				removeSession(session,"userlogin");
+			}else{		
+				//移除session
+				removeSession(session,"userlogin");
+				
+				str="login.html?iden=errorother";
+			}
+		}
+		if(null==rememberme||rememberme.length()==0){
+			cookieUtils.delCookie("rememberme",request.getCookies(), response);
+		}else if(rememberme.equals("forever")){
+			cookieUtils.addCookie(new Cookie("rememberme",log+"&#&"+pwd+"&#&"+2), request.getCookies(),response);
+		}else{
+			cookieUtils.delCookie("rememberme",request.getCookies(), response);
+		}
+		return "redirect:"+str;
+	}
+	
+	@RequestMapping(value="/cregister",method=RequestMethod.POST)
+	public ModelAndView usercrrgister(HttpServletRequest request,HttpServletResponse response,String user_login,String user_email,String redirect_to){
+		ModelAndView model = new ModelAndView(redirect_to);
+		String registeruser = serloginregister.registeruser(user_login, user_email);
+		model.addObject("action", "register");
+		if(registeruser.equals("err")){
+			model.addObject("message_register", "注册失败，用户名或邮箱是重复的");
+		}else{
+			model.addObject("message_register", "注册成功，请检查注册邮件进行下一步操作");
+		}
+		
+		return model;
+	}
+	
+	//找回密码
+	@RequestMapping(value="/lostpass", method=RequestMethod.POST,produces="application/json;charset=UTF-8")
+	public @ResponseBody String uselostpass(HttpServletRequest request,HttpServletResponse response,String iden,String lostpass){
+		//ModelAndView model = new ModelAndView("");
+		String useroremail = serloginregister.useroremail(iden,lostpass);
+		
+		return useroremail;
+	}
+	
+	//密码重置
+	@RequestMapping("/resetpass")
+	public String userResetPass(HttpServletRequest request,HttpServletResponse response,String newpass,String lostpassuid){
+		//ModelAndView model = new ModelAndView("login");
+		serloginregister.userResetPass(lostpassuid,newpass);
+		return "redirect:login.html?iden=resetpassok";
+	}
+	
+	// 退出
+	@SuppressWarnings("unchecked")
+	@RequestMapping("/loginout")
+	public String loginout(HttpSession session){
+		serloginregister.slogout((Map<String, Object>) session.getAttribute("userlog"));
+		session.removeAttribute("userlogin");
+		session.removeAttribute("userlog");
+		return "redirect:../user/login.html?iden=logoutok";	
+	}
+	
+	// 移除session
+	private void removeSession(HttpSession session,String sessionname) {
+		if(null==session.getAttribute(sessionname)){
+			
+		}else{
+			session.removeAttribute(sessionname);
+		}
+	}
+	// 判断session是否存在，输出session的值
+	private String vSession(HttpSession session,String sessionname) {
+		if(null==session.getAttribute(sessionname)||((String) session.getAttribute(sessionname)).length()==0){
+			return "-1";
+		}else{
+			return (String) session.getAttribute(sessionname);
+		}
+	}
+}

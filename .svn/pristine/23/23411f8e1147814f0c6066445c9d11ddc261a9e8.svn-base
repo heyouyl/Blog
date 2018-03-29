@@ -1,0 +1,69 @@
+package springMVC.NLoveB.po;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+
+@Entity(name="options")
+@Table(name="blog_options")
+@DynamicInsert(value = true)
+@DynamicUpdate(value = true)
+public class Options {
+/*
+ * CREATE TABLE IF NOT EXISTS `my028888_options` (
+  `option_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `option_name` varchar(191) DEFAULT NULL,
+  `option_value` longtext NOT NULL,
+  `autoload` varchar(20) NOT NULL DEFAULT 'yes',
+  PRIMARY KEY (`option_id`),
+  UNIQUE KEY `option_name` (`option_name`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=29137 ;
+ */
+	
+	private int optionid;		//参数id
+	private String optionname;	//参数的名称
+	private String optionvalue;	//参数的值
+	private String autoload;	//启动加载
+	
+	@Id
+	@Column(name = "option_id", unique = true, nullable = false,length=20)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	public int getOptionid() {
+		return optionid;
+	}
+	public void setOptionid(int optionid) {
+		this.optionid = optionid;
+	}
+	
+	@Column(name = "option_name", unique = true, nullable = true,length=191)
+	public String getOptionname() {
+		return optionname;
+	}
+	public void setOptionname(String optionname) {
+		this.optionname = optionname;
+	}
+	
+	@Column(name = "option_value", unique = false, nullable = true,columnDefinition="LONGTEXT NOT NULL")
+	public String getOptionvalue() {
+		return optionvalue;
+	}
+	public void setOptionvalue(String optionvalue) {
+		this.optionvalue = optionvalue;
+	}
+	
+	@Column(name = "autoload", unique = false, nullable = true,columnDefinition="varchar(20) NOT NULL DEFAULT 'yes'")
+	public String getAutoload() {
+		return autoload;
+	}
+	public void setAutoload(String autoload) {
+		this.autoload = autoload;
+	}
+	
+	
+}

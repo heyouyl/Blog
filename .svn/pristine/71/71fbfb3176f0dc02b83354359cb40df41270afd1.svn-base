@@ -1,0 +1,5 @@
+package springMVC.NLoveB.service.iter;
+
+public interface SerUpOptionsIter {
+	public String upoptionsinit(String data);
+}

@@ -1,0 +1,18 @@
+package springMVC.NLoveB.service.iter;
+
+import java.util.Map;
+
+public interface SerArticle_PageIter {
+	//管理中心
+	//获得所有文章状态的文章
+	String adminpgesjson(String page,String pagesize);
+	Map<String, Object> getPageid(String pageid);
+	int getCount();
+	/**
+	 * 获得所有的公告
+	 * @param page
+	 * @param pagesize
+	 * @return
+	 */
+	String adminnoticejson(String page, String pagesize);
+}

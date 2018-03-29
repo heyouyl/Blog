@@ -1,0 +1,76 @@
+package springMVC.NLoveB.po;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+
+@Entity(name="guangbd")
+@Table(name="blog_m_guangbd")
+@DynamicInsert(value = true)
+@DynamicUpdate(value = true)
+public class Guangbd {	
+	private int guangbdid;			//参数id
+	private String guangbdlocal;	//广告位置
+	private String guangbddes;		//位置说明	如：首页上方
+	private int guangbdtype;		//类型		如：手机版本（0） 电脑版本（1）
+	private String guangbdcontext;//广告内容		如：手机版本（0） 电脑版本（1）
+	private int guangbdis;			//是否启用 如：不启用（0） 启用（1）
+	
+	@Id
+	@Column(name = "guangbd_id", unique = true, nullable = false,length=20)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	public int getGuangbdid() {
+		return guangbdid;
+	}
+	public void setGuangbdid(int guangbdid) {
+		this.guangbdid = guangbdid;
+	}
+	
+	@Column(name = "getGuangbd_local", unique = false, nullable = false,length=20)
+	public String getGuangbdlocal() {
+		return guangbdlocal;
+	}
+	public void setGuangbdlocal(String guangbdlocal) {
+		this.guangbdlocal = guangbdlocal;
+	}
+	@Column(name = "getGuangbd_des", unique = false, nullable = false,length=60)
+	public String getGuangbddes() {
+		return guangbddes;
+	}
+	public void setGuangbddes(String guangbddes) {
+		this.guangbddes = guangbddes;
+	}
+	@Column(name = "getGuangbd_type", unique = false, nullable = false,length=1)
+	public int getGuangbdtype() {
+		return guangbdtype;
+	}
+	public void setGuangbdtype(int guangbdtype) {
+		this.guangbdtype = guangbdtype;
+	}
+	@Column(name = "getGuangbd_context", unique = false, nullable = false,length=512)
+	public String getGuangbdcontext() {
+		return guangbdcontext;
+	}
+	public void setGuangbdcontext(String guangbdcontext) {
+		this.guangbdcontext = guangbdcontext;
+	}
+	@Column(name = "getGuangbd_is", unique = false,columnDefinition="int(1) NOT NULL DEFAULT 1")
+	public int getGuangbdis() {
+		return guangbdis;
+	}
+	public void setGuangbdis(int guangbdis) {
+		this.guangbdis = guangbdis;
+	}
+	public Guangbd(String guangbdlocal,String guangbdcontext){
+		this.guangbdlocal=guangbdlocal;
+		this.guangbdcontext=guangbdcontext;
+	}
+	public Guangbd(){
+	}
+}

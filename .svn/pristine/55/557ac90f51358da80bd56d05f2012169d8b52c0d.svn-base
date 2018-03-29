@@ -1,0 +1,22 @@
+package springMVC.NLoveB.Advicebean;
+
+import javax.annotation.Resource;
+
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.annotation.AfterReturning;
+import org.aspectj.lang.annotation.Aspect;
+import org.springframework.stereotype.Component;
+
+import springMVC.NLoveB.service.iter.SerEhcacheIter;
+
+@Aspect
+@Component("adviceOptions")
+public class AdviceOptions {
+	@Resource(name="serehcache")
+	private SerEhcacheIter serehcache;
+	
+	@AfterReturning(pointcut="execution(* springMVC.NLoveB.service.iter.SerGuangbdIter.saveSlide(..))",returning="returnValue")
+	public void updatelinks(JoinPoint point, Object returnValue) {
+		serehcache.cleanName("dautooptionOpname");
+	}
+}

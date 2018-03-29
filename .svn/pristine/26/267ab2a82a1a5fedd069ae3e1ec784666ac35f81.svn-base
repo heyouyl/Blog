@@ -1,0 +1,7 @@
+<div class="widget widget_qrcode">
+	<!-- h3>扫码免费领取支付宝红包</h3>
+	<div class="widget-qrcode-content">
+		<img src="${contextPath}${guangbd['right_2']}
+	</div -->
+	${contextPath}${guangbd['right_2']}
+</div>

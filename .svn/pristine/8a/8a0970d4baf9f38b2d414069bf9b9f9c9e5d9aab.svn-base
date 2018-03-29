@@ -1,0 +1,277 @@
+package springMVC.NLoveB.dao.impl;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.hibernate.FetchMode;
+import org.hibernate.criterion.CriteriaSpecification;
+import org.hibernate.criterion.DetachedCriteria;
+import org.hibernate.criterion.MatchMode;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Projections;
+import org.hibernate.criterion.Restrictions;
+import org.hibernate.sql.JoinType;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Repository;
+
+import springMVC.NLoveB.dao.iter.DaoArticle_postsIter;
+import springMVC.NLoveB.po.Posts;
+import springMVC.NLoveB.utils.StringOrObjectUtil;
+//http://elim.iteye.com/blog/2123030
+@Repository("daoarposts")
+public class DaoArticle_postsImpl implements DaoArticle_postsIter{
+	//private HibernateTemplate hibernateTemplate = new HibernateUtil().getHibernateTemplate();
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> List<T> arcount() {
+		StringOrObjectUtil.hql = "select count(*) from posts where postatus=:postatus and post_type=:post_type";
+		String[] params={"postatus","post_type"};
+		Object[] values={"publish","post"};
+		return (List<T>) StringOrObjectUtil.hibernateTemplate.findByNamedParam(StringOrObjectUtil.hql ,params,values);
+	}
+	
+	//获得搜索的关键字的数据大小
+	@Cacheable(value="baseCache",key="'arcount'+'&@'+#s")
+	public <T> List<T> arcount(String s) {
+//		String hql = "select count(*) from posts where postatus=:postatus and post_type=:post_type and (potitle=:s or pocontent=:s)";
+//		String[] params={"postatus","post_type","s",};
+//		Object[] values={"publish","post","%"+s+"%"};
+//		return (List<T>) StringOrObjectUtil.hibernateTemplate.findByNamedParam(hql,params,values);
+		
+		DetachedCriteria criteria = DetachedCriteria.forClass(Posts.class);
+		criteria.add(Restrictions.eq("postatus", "publish"));
+		criteria.add(Restrictions.eq("post_type", "post"));
+		criteria.add(Restrictions.or(Restrictions.like("potitle", s,MatchMode.ANYWHERE),Restrictions.like("pocontent", s,MatchMode.ANYWHERE)));
+		criteria.setProjection(Projections.rowCount());
+		List<?> findByCriteria = StringOrObjectUtil.hibernateTemplate.findByCriteria(criteria);
+		return (List<T>) findByCriteria;
+	}
+
+	//获得文章列表
+	@SuppressWarnings("unchecked")
+	@Cacheable(value="articleListCache",key="'article'+'&@'+#page+'&@'+#pagesize+'&@'+#arcount")
+	@Override
+	public <T> List<T> article(int page, int pagesize,int arcount) {
+		//获得分页数据
+		int fristint = (page==1?0:((page-1)*pagesize));	//获得开始数据 0 10 20 30
+		int endint = (arcount-((page-1)*pagesize)<pagesize?(arcount-((page-1)*pagesize)):pagesize);	//获得当前页码的数据，1到10条
+		//创建DetachedCriteria对象
+		DetachedCriteria criteria = DetachedCriteria.forClass(Posts.class).setFetchMode("term_relationships", FetchMode.SELECT);
+		criteria.setResultTransformer(CriteriaSpecification.DISTINCT_ROOT_ENTITY);
+		criteria.add(Restrictions.eq("postatus", "publish"));
+		criteria.add(Restrictions.eq("post_type", "post"));
+		criteria.addOrder(Order.desc("poid"));
+		
+		List<T> list = (List<T>) StringOrObjectUtil.hibernateTemplate.findByCriteria(criteria, fristint, endint);
+
+		return list;
+	}
+	
+	//获得文章列表
+	@SuppressWarnings("unchecked")
+	@Cacheable(value="articleListCache",key="'article'+'&@'+#page+'&@'+#pagesize+'&@'+#s+'&@'+#arcount")
+	@Override
+	public <T> List<T> article(int page, int pagesize,String s,int arcount) {
+		//获得分页数据
+		int fristint = (page==1?0:((page-1)*pagesize));	//获得开始数据 0 10 20 30
+		int endint = (arcount-((page-1)*pagesize)<pagesize?(arcount-((page-1)*pagesize)):pagesize);	//获得当前页码的数据，1到10条
+		//创建DetachedCriteria对象
+		DetachedCriteria criteria = DetachedCriteria.forClass(Posts.class).setFetchMode("term_relationships", FetchMode.SELECT);
+		criteria.setResultTransformer(CriteriaSpecification.DISTINCT_ROOT_ENTITY);
+		criteria.add(Restrictions.eq("postatus", "publish"));
+		criteria.add(Restrictions.eq("post_type", "post"));
+		criteria.add(Restrictions.or(Restrictions.like("potitle", s,MatchMode.ANYWHERE),Restrictions.like("pocontent", s,MatchMode.ANYWHERE)));
+		criteria.addOrder(Order.desc("poid"));
+		
+		List<T> list = (List<T>) StringOrObjectUtil.hibernateTemplate.findByCriteria(criteria, fristint, endint);
+
+		return list;
+	}
+	
+	//浏览一次文章加1 获得postmeta
+	@Override
+	public <T> List<T> postmetaviews(int poid) {
+		Posts p = new Posts();
+		p.setPoid(poid);
+		StringOrObjectUtil.hql = "from postmeta where postid=:postid and metakey=:metakey";
+		String[] params={"postid","metakey"};
+		Object[] values={p,"views"};
+		List<?> findByExample = StringOrObjectUtil.hibernateTemplate.findByNamedParam(StringOrObjectUtil.hql , params, values);
+		return (List<T>) findByExample;
+	}
+	//浏览一次文章加1
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T> void addpostmetaviews(T t) {
+		StringOrObjectUtil.hibernateTemplate.saveOrUpdate(t);
+	}
+	
+	//获得postmeta
+	@Override
+	@Cacheable(value="articleCache",key="'postmeta'+'&@'+#poid")
+	public <T> List<T> postmeta(int poid) {
+		Posts p = new Posts();
+		p.setPoid(poid);
+		StringOrObjectUtil.hql = "from postmeta where postid=:postid";
+		String[] params={"postid"};
+		Object[] values={p};
+		List<?> findByExample = StringOrObjectUtil.hibernateTemplate.findByNamedParam(StringOrObjectUtil.hql , params, values);
+
+		return (List<T>) findByExample;
+	}
+	
+	//获得该分类的最新一篇文章
+	@SuppressWarnings("unchecked")
+	@Cacheable(value="articleCache",key="'newtermsid'+'&@'+#termsid")
+	@Override
+	public <T> List<T> termsid(int termsid) {
+		DetachedCriteria criteria = DetachedCriteria.forClass(Posts.class);
+		criteria.createAlias("term_relationships", "tr");
+		criteria.createAlias("tr.taxonomyid", "tt");
+		criteria.createAlias("tt.termid", "td");
+		criteria.add(Restrictions.eq("td.termid", termsid));
+		criteria.addOrder(Order.desc("poid"));
+		List<T> list = (List<T>) StringOrObjectUtil.hibernateTemplate.findByCriteria(criteria, 0, 1);
+		return list;
+	}
+
+	@Override
+	@Cacheable(value="articleListCache",key="'termslug'+'&@'+#page+'&@'+#pagesize+'&@'+#arcount+'&@'+#termslug+'&@'+#categroy")
+	public <T> List<T> termslug(int page,int pagesize,int arcount,String termslug,String categroy) {
+		//获得分页数据
+		int fristint = (page==1?0:((page-1)*pagesize));	//获得开始数据 0 10 20 30
+		//arcount 是分类的文章大小，后期需要修改，因此时是所有的文章大小
+		int endint = (arcount-((page-1)*pagesize)<pagesize?(arcount-((page-1)*pagesize)):pagesize);	//获得当前页码的数据，1到10条
+		
+		DetachedCriteria criteria = DetachedCriteria.forClass(Posts.class).setFetchMode("term_relationships", FetchMode.SELECT);
+		criteria.setResultTransformer(CriteriaSpecification.DISTINCT_ROOT_ENTITY);
+		criteria.createAlias("term_relationships", "tr",JoinType.INNER_JOIN);
+		criteria.createAlias("tr.taxonomyid", "tt",JoinType.INNER_JOIN);
+		criteria.add(Restrictions.eq("tt.taxonomy", categroy));
+		criteria.createAlias("tt.termid", "td",JoinType.INNER_JOIN);
+		criteria.add(Restrictions.eq("td.slug", termslug));
+		criteria.addOrder(Order.desc("poid"));
+		List<T> list = (List<T>) StringOrObjectUtil.hibernateTemplate.findByCriteria(criteria, fristint, endint);
+		return list;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	@Cacheable(value="articleCache",key="'articlid'+'&@'+#arid")
+	public Posts articlid(int arid) {
+		String hql = "from posts where poid=:poid";
+		List<?> findByNamedParam = StringOrObjectUtil.hibernateTemplate.findByNamedParam(hql, "poid", arid);
+		return (Posts) findByNamedParam.get(0);
+	}
+
+	@Override
+	public <T, O,P> Map<String,Object> addticle(T t, O[] o,P[] p) {
+		for(int i=0;i<o.length;i++){
+			StringOrObjectUtil.hibernateTemplate.saveOrUpdate(o[i]);
+		}
+//		for(int i=0;i<p.length;i++){
+//			StringOrObjectUtil.hibernateTemplate.saveOrUpdate(p[i]);
+//		}
+		
+		StringOrObjectUtil.hibernateTemplate.saveOrUpdate(t);
+		Map<String,Object> map = new HashMap<String,Object>();
+		map.put("o", o);
+		map.put("t", t);
+		return map;
+	}
+
+	@Override
+	public <T> T addUserTicle(T t) {
+		StringOrObjectUtil.hibernateTemplate.saveOrUpdate(t);
+		return t;
+	}
+
+	@Override
+	@Cacheable(value="articleListCache",key="'userarticle'+'&@'+#page+'&@'+#pagesize+'&@'+#arcount+'p&@'+#poststatus+'&@'+#userid")
+	public <T> List<T> userarticle(int page, int pagesize, int arcount, String poststatus, int userid) {
+		//获得分页数据
+		int fristint = (page==1?0:((page-1)*pagesize));	//获得开始数据 0 10 20 30
+		//arcount 是分类的文章大小，后期需要修改，因此时是所有的文章大小
+		int endint = (arcount-((page-1)*pagesize)<pagesize?(arcount-((page-1)*pagesize)):pagesize);	//获得当前页码的数据，1到10条
+		
+		DetachedCriteria criteria = DetachedCriteria.forClass(Posts.class).setFetchMode("term_relationships", FetchMode.SELECT);
+		
+		criteria.setResultTransformer(CriteriaSpecification.DISTINCT_ROOT_ENTITY);
+		if(!poststatus.equals("all")){
+			criteria.add(Restrictions.eq("postatus", poststatus));
+		}
+		criteria.add(Restrictions.eq("post_type","post"));
+		criteria.add(Restrictions.eq("userid", userid));
+		criteria.addOrder(Order.desc("poid"));
+		List<T> list = (List<T>) StringOrObjectUtil.hibernateTemplate.findByCriteria(criteria, fristint, endint);
+		return list;
+	}
+
+	@Override
+	//根据文章状态获得用户不同的文章数据大小
+	@Cacheable(value="userstatusCache",key="'userarticleLength'+'&@'+#poststatus+'&@'+#userid")
+	public <T> List<T> userarticleLength(String poststatus, int userid) {
+		if(poststatus.equals("all")){
+			StringOrObjectUtil.hql = "select count(*) from posts where post_type=:post_type and userid=:userid";
+			String[] params={"post_type","userid"};
+			Object[] values={"post",userid};
+			return (List<T>) StringOrObjectUtil.hibernateTemplate.findByNamedParam(StringOrObjectUtil.hql ,params,values);
+		}else{
+			StringOrObjectUtil.hql = "select count(*) from posts where postatus=:postatus and post_type=:post_type and userid=:userid";
+			String[] params={"postatus","post_type","userid"};
+			Object[] values={poststatus,"post",userid};
+			return (List<T>) StringOrObjectUtil.hibernateTemplate.findByNamedParam(StringOrObjectUtil.hql ,params,values);
+		}
+	}
+
+	//admin	获得用户的文章列表,根据参数获得不懂状态的值
+	@Override
+	@Cacheable(value="adminpostListCache",key="'adminpost'+'&@'+#page+'&@'+#pagesize+'&@'+#arcount+'p&@'+#poststatus")
+	public <T> List<T> adminpost(int page, int pagesize, int arcount,String poststatus) {
+		//获得分页数据
+		int fristint = (page==1?0:((page-1)*pagesize));	//获得开始数据 0 10 20 30
+		//arcount 是分类的文章大小，后期需要修改，因此时是所有的文章大小
+		int endint = (arcount-((page-1)*pagesize)<pagesize?(arcount-((page-1)*pagesize)):pagesize);	//获得当前页码的数据，1到10条
+		
+		DetachedCriteria criteria = DetachedCriteria.forClass(Posts.class).setFetchMode("term_relationships", FetchMode.SELECT);
+		
+		criteria.setResultTransformer(CriteriaSpecification.DISTINCT_ROOT_ENTITY);
+		if(!poststatus.equals("all")){
+			criteria.add(Restrictions.eq("postatus", poststatus));
+		}
+		criteria.add(Restrictions.eq("post_type","post"));
+		criteria.addOrder(Order.desc("poid"));
+		List<T> list = (List<T>) StringOrObjectUtil.hibernateTemplate.findByCriteria(criteria, fristint, endint);
+		return list;
+	}
+
+	@Override
+	public <T >void deletearid(T t) {
+		Posts load = StringOrObjectUtil.hibernateTemplate.load(Posts.class,(int) t);
+		StringOrObjectUtil.hibernateTemplate.delete(load);
+	}
+
+	@Override
+	public void updateGuid(int poid) {
+		Posts load = StringOrObjectUtil.hibernateTemplate.load(Posts.class, poid);
+		load.setGuid(load.getGuid()+poid);
+		StringOrObjectUtil.hibernateTemplate.update(load);
+	}
+
+	@Override
+	public <T> List<T> article_notice(int noticesize) {
+		//获得分页数据
+		//创建DetachedCriteria对象
+		DetachedCriteria criteria = DetachedCriteria.forClass(Posts.class);
+		criteria.setResultTransformer(CriteriaSpecification.DISTINCT_ROOT_ENTITY);
+		criteria.add(Restrictions.eq("postatus", "publish"));
+		criteria.add(Restrictions.eq("post_type", "notice"));
+		criteria.addOrder(Order.desc("poid"));
+		
+		List<T> list = (List<T>) StringOrObjectUtil.hibernateTemplate.findByCriteria(criteria, 0, noticesize);
+
+		return list;
+	}
+}

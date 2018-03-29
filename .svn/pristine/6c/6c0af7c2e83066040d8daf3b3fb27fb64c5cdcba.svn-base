@@ -1,0 +1,11 @@
+package springMVC.NLoveB.service.iter;
+
+public interface SerEhcacheIter {
+	String cleanAll();		//清除所有的缓存
+	String cleanName(String name);		//清除所有的Name缓存
+	String cleanKey(String name,String key);		//清除Name里面的key缓存
+	String cleanKey(String name, String[] key);
+	
+	String[] ehcachenames();			//获得缓存的name
+	String ehcachenamekeys(String name);		//获得缓存的name的keys
+}

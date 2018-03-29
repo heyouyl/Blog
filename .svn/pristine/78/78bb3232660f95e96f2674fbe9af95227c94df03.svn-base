@@ -1,0 +1,8 @@
+package springMVC.NLoveB.service.iter;
+
+import java.util.Map;
+
+public interface SerOptionsIter {
+	//默认获得自动加载的数据，返回一个list[key[]] list[value[]]
+	public Map<String,String> getOptionsAuto();
+}

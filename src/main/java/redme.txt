@@ -1,0 +1,3 @@
+请仔细阅读Java爱好者开原协议
+您需要修改jdbc.properties和email.properties
+两个文件
